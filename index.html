@@ -217,6 +217,47 @@
   .limit-banner { background: var(--accent-bg); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 16px; margin: 12px 0 0; text-align: center; font-size: 0.82rem; color: var(--text2); line-height: 1.6; }
   .limit-banner strong { color: var(--accent); }
   .limit-banner button { margin-top: 8px; padding: 7px 18px; background: var(--send-bg); color: var(--send-fg); border: none; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
+
+  /* MODEL SWITCHER */
+  .model-bar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px; padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    overflow-x: auto; flex-shrink: 0;
+  }
+  .model-bar::-webkit-scrollbar { display: none; }
+
+  .model-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 13px; border-radius: 100px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text2); cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.06em;
+    white-space: nowrap;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .model-pill:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+  .model-pill.active { background: var(--accent); color: var(--send-fg); border-color: var(--accent); }
+  .model-pill .pill-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .model-pill.active .pill-dot { background: var(--send-fg); }
+  .model-pill:not(.active) .pill-dot { background: var(--accent-soft); }
+
+  /* Mode-specific accent tweaks */
+  body.mode-zipped .model-pill.active { background: #3a6e5c; border-color: #3a6e5c; }
+  body.mode-zipped .model-pill.active .pill-dot { background: #a8f0d8; }
+  body.mode-zipped { --accent: #3a6e5c; --accent-soft: #5a9e8c; --accent-bg: rgba(58,110,92,0.08); --send-bg: #3a6e5c; --dot-color: #3a6e5c; }
+
+  body.mode-quasar .model-pill.active { background: #3a4a8a; border-color: #3a4a8a; }
+  body.mode-quasar .model-pill.active .pill-dot { background: #b0c4ff; }
+  body.mode-quasar { --accent: #3a4a8a; --accent-soft: #5a6ab0; --accent-bg: rgba(58,74,138,0.08); --send-bg: #3a4a8a; --dot-color: #3a4a8a; }
+
+  /* Code output styling for Zipped */
+  body.mode-zipped .bubble pre { border-left: 3px solid #3a6e5c; }
+  body.mode-zipped .bubble code { color: #3a6e5c; }
 </style>
 </head>
 <body>
@@ -332,6 +373,19 @@
     </div>
   </header>
 
+  <!-- MODEL SWITCHER BAR -->
+  <div class="model-bar">
+    <button class="model-pill active" id="pill-zen" onclick="setModel('zen')">
+      <span class="pill-dot"></span> ZEN 1.0
+    </button>
+    <button class="model-pill" id="pill-zipped" onclick="setModel('zipped')">
+      <span class="pill-dot"></span> ZIPPED 1.0
+    </button>
+    <button class="model-pill" id="pill-quasar" onclick="setModel('quasar')">
+      <span class="pill-dot"></span> QUASAR 1.0
+    </button>
+  </div>
+
   <div id="chat-container"></div>
 
   <div class="input-area">
@@ -348,6 +402,53 @@
 
 <script>
   var FREE_LIMIT = 30;
+  var currentModel = 'zen';
+
+  var MODEL_CONFIG = {
+    zen: {
+      name: 'ZEN 1.0',
+      placeholder: 'Ask ZEN anything...',
+      welcome: 'Hello,<br><span>what\'s on your mind?</span>',
+      welcomeSub: 'ZEN by Stavya Pratap Singh — ask me anything about coding, AI, science, space, or big ideas.',
+      suggestions: ['How does AI actually work?','Teach me Python basics','What is quantum computing?','How do I start a tech company?','Explain machine learning simply','Write me a Python function'],
+      system: 'You are ZEN — a highly intelligent AI assistant created by Stavya Pratap Singh, a young developer building companies in AI, quantum computing, space tech, and coding tools. Be brilliant but warm, like a genius friend. Expert in coding, AI, math, science, space, startups. Give clear structured answers. Use code blocks for code. Be honest and human.'
+    },
+    zipped: {
+      name: 'ZIPPED 1.0',
+      placeholder: 'Ask Zipped to write, debug, or build code...',
+      welcome: 'Ready to code,<br><span>what are we building?</span>',
+      welcomeSub: 'Zipped 1.0 by Stavya — specialized for coding, debugging, and building AI projects.',
+      suggestions: ['Write a Python web scraper','Build a simple neural network','Debug this JavaScript code','Create a REST API in Python','How do I train an AI model?','Build a chatbot from scratch'],
+      system: 'You are ZIPPED 1.0 — an elite coding AI created by Stavya Pratap Singh. You are a world-class software engineer and AI developer. You specialize in: writing clean production-ready code, debugging errors, building AI/ML models from scratch, explaining complex algorithms, creating web apps, APIs, neural networks, and helping developers build other AI systems. You can guide users to build their own AI assistants, recommendation systems, image classifiers, and more. Always write complete, runnable code. Use proper code blocks with language labels. Explain what each part does. Be precise, thorough, and expert-level. When someone wants to build an AI, walk them through the full process step by step.'
+    },
+    quasar: {
+      name: 'QUASAR 1.0',
+      placeholder: 'Ask Quasar to research anything deeply...',
+      welcome: 'Deep research mode,<br><span>what shall we explore?</span>',
+      welcomeSub: 'Quasar 1.0 by Stavya — specialized for deep research, analysis, and comprehensive answers.',
+      suggestions: ['Analyze the future of quantum computing','Research the latest in AI breakthroughs','Explain the James Webb telescope findings','Deep dive into black hole physics','Compare top AI companies and their models','What will technology look like in 2050?'],
+      system: 'You are QUASAR 1.0 — a deep research AI created by Stavya Pratap Singh. You specialize in comprehensive research, in-depth analysis, scientific explanations, and synthesizing complex information from multiple angles. When answering: provide thorough, well-structured responses with clear sections. Cover multiple perspectives. Cite relevant concepts, theories, and real-world examples. Go deep, not just surface level. Use headers and structure for long answers. You are like a brilliant research professor who makes complex topics fascinating and accessible. Cover history, current state, future implications, and key debates around any topic.'
+    }
+  };
+
+  function setModel(m) {
+    currentModel = m;
+    // Update pills
+    ['zen','zipped','quasar'].forEach(function(k) {
+      var pill = document.getElementById('pill-' + k);
+      if (pill) pill.classList.toggle('active', k === m);
+    });
+    // Update body class for color theming
+    document.body.classList.remove('mode-zen','mode-zipped','mode-quasar');
+    document.body.classList.add('mode-' + m);
+    // Update placeholder
+    var inp = document.getElementById('user-input');
+    if (inp) inp.placeholder = MODEL_CONFIG[m].placeholder;
+    // Show welcome for current model
+    showWelcome();
+    // Update title
+    document.getElementById('current-title').textContent = 'NEW CONVERSATION';
+  }
   var sessions = [], currentId = null, isLoading = false;
   var msgCount = 0, isSignedUp = false, userEmail = '';
   var signinUser = null, feedbackRating = 0;
@@ -574,18 +675,16 @@
   }
 
   function showWelcome() {
+    var cfg = MODEL_CONFIG[currentModel];
+    var suggs = cfg.suggestions.map(function(s) {
+      return '<button class="suggestion-btn" onclick="sendSuggestion(this)">' + s + '</button>';
+    }).join('');
     document.getElementById('chat-container').innerHTML =
       '<div class="welcome" id="welcome">'
-      + '<h1>Hello,<br><span>what\'s on your mind?</span></h1>'
-      + '<p>ZEN by Stavya Pratap Singh — ask me anything about coding, AI, science, space, or big ideas.</p>'
-      + '<div class="suggestions">'
-      + '<button class="suggestion-btn" onclick="sendSuggestion(this)">How does AI actually work?</button>'
-      + '<button class="suggestion-btn" onclick="sendSuggestion(this)">Teach me Python basics</button>'
-      + '<button class="suggestion-btn" onclick="sendSuggestion(this)">What is quantum computing?</button>'
-      + '<button class="suggestion-btn" onclick="sendSuggestion(this)">How do I start a tech company?</button>'
-      + '<button class="suggestion-btn" onclick="sendSuggestion(this)">Explain machine learning simply</button>'
-      + '<button class="suggestion-btn" onclick="sendSuggestion(this)">Write me a Python function</button>'
-      + '</div></div>';
+      + '<h1>' + cfg.welcome + '</h1>'
+      + '<p>' + cfg.welcomeSub + '</p>'
+      + '<div class="suggestions">' + suggs + '</div>'
+      + '</div>';
   }
 
   function appendBubble(role, content, animate) {
@@ -657,7 +756,7 @@
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 2000,
-          system: 'You are ZEN — a highly intelligent AI assistant created by Stavya Pratap Singh, a young developer building companies in AI, quantum computing, space tech, and coding tools. Be brilliant but warm, like a genius friend. Expert in coding, AI, math, science, space, startups. Give clear structured answers. Use code blocks for code. Be honest and human.',
+          system: MODEL_CONFIG[currentModel].system,
           messages: apiMsgs
         })
       });
